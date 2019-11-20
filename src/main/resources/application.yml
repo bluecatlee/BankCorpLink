@@ -1,0 +1,25 @@
+# 直连机安装软件及账户信息请向对应的对接交行获取
+
+server:
+  port: 10009
+
+logging:
+  level:
+    com.github.bluecatlee.bcm: debug
+
+bcm:
+  corp-no: ""  # 企业代码
+  user-no: ""  # 用户号
+  http:
+    host: 127.0.0.1
+    port: 8899
+  socket:
+    enabled: false
+    host: 127.0.0.1
+    port: 30010
+    timeout: 5000
+
+yegoo:
+  cagrNo: ""       #收款协议编号(主协议编号)
+  recAccNo: ""     #收款账号
+  recAccName: ""   #收款户名

@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.github.bluecatlee.bcm.config.CallImplConfiguration,\
+  com.github.bluecatlee.bcm.handler.factory.DefaultHandlerFactory,\
+  com.github.bluecatlee.bcm.handler.DefaultBcmRespBizPostHandler
