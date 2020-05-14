@@ -1,4 +1,4 @@
-package com.github.bluecatlee.bcm.id.configuration;
+package com.github.bluecatlee.common.id.configuration;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

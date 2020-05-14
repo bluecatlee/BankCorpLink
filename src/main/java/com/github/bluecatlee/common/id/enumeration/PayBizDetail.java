@@ -1,4 +1,4 @@
-package com.github.bluecatlee.bcm.id.enumeration;
+package com.github.bluecatlee.common.id.enumeration;
 
 
 /**
@@ -10,7 +10,9 @@ public enum PayBizDetail implements BizDetailEnum{
 	/**
 	 * 用于生成交行请求发起方序号
 	 */
-	BCM(0);
+	BCM(0),
+
+	CIB(1);
 
 	private int value;
 

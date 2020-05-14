@@ -1,4 +1,4 @@
-package com.github.bluecatlee.bcm.id.enumeration;
+package com.github.bluecatlee.common.id.enumeration;
 
 
 /**

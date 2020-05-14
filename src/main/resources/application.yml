@@ -25,6 +25,13 @@ bcm:
     port: 30010
     timeout: 5000
 
+cib:
+  cid: "1100343164"
+  userid: "qw1"
+  userpass: "a1111111"
+  http:
+    host: 192.168.10.3
+    port: 8007
 
 
 

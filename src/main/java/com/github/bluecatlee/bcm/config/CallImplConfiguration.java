@@ -12,22 +12,21 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * 调用实现方式配置类
- *  todo 优化未配置属性时解析失败导致启动报错 不使用@Value
  */
 @Configuration
 public class CallImplConfiguration {
 
-    @Value("${bcm.http.host}")
+    @Value("${bcm.http.host:#{null}}")
     private String httpHost;
-    @Value("${bcm.http.port}")
+    @Value("${bcm.http.port:#{null}}")
     private Integer httpPort;
-    @Value("${bcm.socket.enabled}")
-    private boolean socketEnabled;
-    @Value("${bcm.socket.host}")
+    @Value("${bcm.socket.enabled:#{null}}")
+    private Boolean socketEnabled;
+    @Value("${bcm.socket.host:#{null}}")
     private String socketHost;
-    @Value("${bcm.socket.port}")
+    @Value("${bcm.socket.port:#{null}}")
     private Integer socketPort;
-    @Value("${bcm.socket.timeout}")
+    @Value("${bcm.socket.timeout:#{null}}")
     private Integer socketTimeout;
 
     private static final String DEFAULT_HTTP_HOST = "127.0.0.1";

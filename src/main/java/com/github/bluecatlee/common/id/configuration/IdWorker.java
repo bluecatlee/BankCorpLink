@@ -1,9 +1,9 @@
-package com.github.bluecatlee.bcm.id.configuration;
+package com.github.bluecatlee.common.id.configuration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.bluecatlee.bcm.id.enumeration.Biz;
-import com.github.bluecatlee.bcm.id.enumeration.BizDetailEnum;
+import com.github.bluecatlee.common.id.enumeration.Biz;
+import com.github.bluecatlee.common.id.enumeration.BizDetailEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
