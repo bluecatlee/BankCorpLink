@@ -7,9 +7,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.github.bluecatlee.common.id.configuration.IdWorker;
-import com.github.bluecatlee.common.id.enumeration.Biz;
-import com.github.bluecatlee.common.id.enumeration.PayBizDetail;
 import com.github.bluecatlee.cib.base.BaseReq;
 import com.github.bluecatlee.cib.base.BaseResp;
 import com.github.bluecatlee.cib.base.Status;
@@ -24,6 +21,10 @@ import com.github.bluecatlee.cib.exception.CibException;
 import com.github.bluecatlee.cib.utils.OkHttpUtils;
 import com.github.bluecatlee.cib.utils.ReflectUtils;
 import com.github.bluecatlee.cib.valid.Validator;
+import com.github.bluecatlee.common.id.configuration.IdWorker;
+import com.github.bluecatlee.common.id.enumeration.Biz;
+import com.github.bluecatlee.common.id.enumeration.PayBizDetail;
+import com.github.bluecatlee.logger.CibLogger;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +79,12 @@ public class Caller {
     private IdWorker idWorker;
 
     /**
+     * 日志数据记录 业务方调用者实现
+     */
+    @Autowired(required = false)
+    private CibLogger cibLogger;
+
+    /**
      * 发起调用
      *      直接返回xml字符串 由调用者单独解析
      * @param reqParams
@@ -92,15 +99,11 @@ public class Caller {
             byte[] bytes = request.getBytes(Constants.DEFAULT_CHARSET);
             result = OkHttpUtils.request("http://" + host + ":" + port, bytes, null);
             LOGGER.debug(LOG_PREFIX + "http call response:" + result);
+            this.log(reqParams.getBizTag(), request, result);
         } catch(Exception e) {
             LOGGER.error(LOG_PREFIX + "调用异常: ", e);
-
-            // 日志记录并抛出异常 todo
-            // throw new CibException(e);
-        }
-
-        if (StringUtils.isBlank(result)) {
-
+            this.log(reqParams.getBizTag(), request, result);
+            throw new CibException("调用异常", e);
         }
 
         return result;
@@ -126,11 +129,11 @@ public class Caller {
             // headers.put("Content-Length", String.valueOf(bytes.length));
             result = OkHttpUtils.request("http://" + host + ":" + port, bytes, null);
             LOGGER.debug(LOG_PREFIX + "http call response:" + result);
+            this.log(reqParams.getBizTag(), request, result);
         } catch(Exception e) {
             LOGGER.error(LOG_PREFIX + "调用异常: ", e);
-
-            // 日志记录并抛出异常 todo
-            // throw new CibException(e);
+            this.log(reqParams.getBizTag(), request, result);
+            throw new CibException("调用异常", e);
         }
 
         return parse(result, reqParams.getRespBizTag(), reqParams.getResultWrapperTag(), typeReference);
@@ -259,8 +262,24 @@ public class Caller {
         return null;
     }
 
-    protected void log() {
+    protected void log(String type, String reqMsg, String respMsg) {
+        this.log(type, reqMsg, respMsg, null, null, null, null, null, null);
+    }
 
+    protected void log(String type, String reqMsg, String respMsg, String trnuid, String code, String message, String xcode, String xmessage, String info) {
+        if (cibLogger != null) {
+            Map<String, String> params = new HashMap<>();
+            params.put("type", type);
+            params.put("reqMsg", reqMsg);
+            params.put("respMsg", respMsg);
+            params.put("trnuid", trnuid);
+            params.put("code", code);
+            params.put("message", message);
+            params.put("xcode", xcode);
+            params.put("xmessage", xmessage);
+            params.put("info", info);
+            cibLogger.log(params);
+        }
     }
 
     protected void set(String val) {

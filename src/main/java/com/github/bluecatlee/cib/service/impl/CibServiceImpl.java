@@ -61,7 +61,6 @@ public class CibServiceImpl implements CibService {
             businessResp = XML_MAPPER.readValue(s, new TypeReference<BusinessResp<AccountQueryResult>>() {});
 
         } catch (IOException e) {
-            // e.printStackTrace();
             throw new CibException("解析异常", e);
         }
 
@@ -98,7 +97,6 @@ public class CibServiceImpl implements CibService {
             businessResp = XML_MAPPER.readValue(s, new TypeReference<BusinessResp<SignResult>>() {});
 
         } catch (IOException e) {
-            // e.printStackTrace();
             throw new CibException("解析异常", e);
         }
 

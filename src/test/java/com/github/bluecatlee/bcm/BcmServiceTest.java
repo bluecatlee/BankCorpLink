@@ -17,7 +17,7 @@ import java.util.List;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TestBcmApplication.class)
 @ActiveProfiles("test")
-public class TestBcm {
+public class BcmServiceTest {
 
     @Autowired
     private BcmService bcmService;
