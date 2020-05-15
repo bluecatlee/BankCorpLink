@@ -1,11 +1,10 @@
-package com.github.bluecatlee.bcm;
+package com.github.bluecatlee.cib;
 
 import com.github.bluecatlee.cib.service.CibService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.math.BigDecimal;
@@ -14,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TestCibApplication.class)
-@ActiveProfiles("test")
+// @ActiveProfiles("test")
 public class CibServiceTest {
 
     // @Autowired

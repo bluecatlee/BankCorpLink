@@ -1,4 +1,4 @@
-package com.github.bluecatlee.logger;
+package com.github.bluecatlee.cib.logger;
 
 public interface CibLogger {
 

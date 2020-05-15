@@ -1,4 +1,4 @@
-package com.github.bluecatlee.bcm;
+package com.github.bluecatlee.cib;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;

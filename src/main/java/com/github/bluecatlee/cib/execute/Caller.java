@@ -24,7 +24,7 @@ import com.github.bluecatlee.cib.valid.Validator;
 import com.github.bluecatlee.common.id.configuration.IdWorker;
 import com.github.bluecatlee.common.id.enumeration.Biz;
 import com.github.bluecatlee.common.id.enumeration.PayBizDetail;
-import com.github.bluecatlee.logger.CibLogger;
+import com.github.bluecatlee.cib.logger.CibLogger;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
