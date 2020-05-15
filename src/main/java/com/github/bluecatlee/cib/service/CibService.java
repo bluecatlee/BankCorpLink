@@ -1,8 +1,8 @@
 package com.github.bluecatlee.cib.service;
 
+import com.github.bluecatlee.cib.bean.TransferResult;
 import com.github.bluecatlee.cib.bean.accquery.response.AccountQueryResult;
 import com.github.bluecatlee.cib.bean.vsa.SubAcctInfo;
-import com.github.bluecatlee.cib.bean.vsa.result.InnerTransferResult;
 import com.github.bluecatlee.cib.bean.vsa.result.SubAcctTransDetailQueryResult;
 import org.springframework.lang.Nullable;
 
@@ -42,8 +42,9 @@ public interface CibService {
      * @param transAmt  转账金额 Decimal(17,2)
      * @param purpose 转账用途  支付服务费/退还服务费
      * @param memo 备注
+     * @param requestSeqId 发起方请求序号 重试时使用(此时相当于查询)
      */
-    InnerTransferResult innerTransfer(String mainAcct, String subAcct, String toSubAcct, BigDecimal transAmt, String purpose, @Nullable String memo);
+    TransferResult innerTransfer(String mainAcct, String subAcct, String toSubAcct, BigDecimal transAmt, String purpose, @Nullable String memo, @Nullable String requestSeqId);
 
     /**
      * 查询子账号信息

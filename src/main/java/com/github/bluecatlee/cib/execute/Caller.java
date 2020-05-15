@@ -88,11 +88,24 @@ public class Caller {
      * 发起调用
      *      直接返回xml字符串 由调用者单独解析
      * @param reqParams
+     * @param requestSeqId
      * @return
      */
     @SuppressWarnings("all")
     public String execute(ReqParams reqParams) {
-        String request = build(reqParams);
+        return execute(reqParams, null);
+    }
+
+    /**
+     * 发起调用
+     *      直接返回xml字符串 由调用者单独解析
+     * @param reqParams
+     * @param requestSeqId
+     * @return
+     */
+    @SuppressWarnings("all")
+    public String execute(ReqParams reqParams, String requestSeqId) {
+        String request = build(reqParams, requestSeqId);
         String result = null;
         try {
             LOGGER.debug(LOG_PREFIX + "http call request:" + request);
@@ -113,13 +126,15 @@ public class Caller {
      * 发起调用
      *      通用的解析方法难以复用且过于复杂 并发不安全 如果加锁则会影响性能
      * @param reqParams
+     * @param requestSeqId
+     * @param typeReference
      * @return
      */
     @SuppressWarnings("all")
     @Deprecated
-    public <T extends RespParams> BusinessResp<T> execute(ReqParams reqParams, TypeReference<BusinessResp<T>> typeReference) {
+    public <T extends RespParams> BusinessResp<T> execute(ReqParams reqParams, String requestSeqId, TypeReference<BusinessResp<T>> typeReference) {
 
-        String request = build(reqParams);
+        String request = build(reqParams, requestSeqId);
         String result = null;
         try {
             LOGGER.debug(LOG_PREFIX + "http call request:" + request);
@@ -145,9 +160,10 @@ public class Caller {
      *      说明：必填字段必须要有对应的xml标签
      *      使用了同步 如果有性能问题则需要单独构建请求内容
      * @param reqParams
+     * @param requestSeqId
      * @return
      */
-    private synchronized String build(ReqParams reqParams) {
+    private synchronized String build(ReqParams reqParams, String requestSeqId) {
 
         // 参数校验
         Validator.validate(reqParams);
@@ -164,7 +180,10 @@ public class Caller {
 
         SecuritiesMsgReq securitiesMsgReq = new SecuritiesMsgReq();
         BusinessReq businessReq = new BusinessReq();
-        String trnuid = String.valueOf(idWorker.generate(Biz.PAY, PayBizDetail.CIB));
+        String trnuid = requestSeqId;
+        if (StringUtils.isBlank(requestSeqId)) {
+            trnuid = String.valueOf(idWorker.generate(Biz.PAY, PayBizDetail.CIB));
+        }
         set(trnuid);
         businessReq.setTrnuid(trnuid);
         businessReq.setReqParams(reqParams);

@@ -8,13 +8,14 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.github.bluecatlee.cib.base.Status;
 import com.github.bluecatlee.cib.base.TransferProcessResult;
 import com.github.bluecatlee.cib.base.response.BusinessResp;
+import com.github.bluecatlee.cib.bean.TransferResult;
 import com.github.bluecatlee.cib.bean.accquery.request.AccountQuery;
 import com.github.bluecatlee.cib.bean.accquery.response.AccountQueryResult;
 import com.github.bluecatlee.cib.bean.vsa.AccountForm;
 import com.github.bluecatlee.cib.bean.vsa.SubAcctInfo;
 import com.github.bluecatlee.cib.bean.vsa.request.*;
 import com.github.bluecatlee.cib.bean.vsa.result.*;
-import com.github.bluecatlee.cib.constant.XferPrcConstants;
+import com.github.bluecatlee.cib.constant.XferPrcEnum;
 import com.github.bluecatlee.cib.exception.CibException;
 import com.github.bluecatlee.cib.execute.Caller;
 import com.github.bluecatlee.cib.service.CibService;
@@ -188,7 +189,7 @@ public class CibServiceImpl implements CibService {
     }
 
     @Override
-    public InnerTransferResult innerTransfer(String mainAcct, String subAcct, String toSubAcct, BigDecimal transAmt, String purpose, String memo) {
+    public TransferResult innerTransfer(String mainAcct, String subAcct, String toSubAcct, BigDecimal transAmt, String purpose, String memo, String requestSeqId) {
         InnerTransfer innerTransfer = new InnerTransfer();
         innerTransfer.setMainAcct(mainAcct);
         innerTransfer.setSubAcct(subAcct);
@@ -217,13 +218,28 @@ public class CibServiceImpl implements CibService {
             }
             JsonNode xferprcstsNode = bizNode.get("XFERPRCSTS");
             TransferProcessResult transferProcessResult = XML_MAPPER.readValue(XML_MAPPER.writeValueAsString(xferprcstsNode), TransferProcessResult.class);
-            if (!XferPrcConstants.PAYOUT.equals(transferProcessResult.getCode())) {
-                throw new CibException("查询失败： 交易处理状态异常");
-            }
+            // if (!XferPrcConstants.PAYOUT.equals(transferProcessResult.getCode())) {
+            //     throw new CibException("查询失败： 交易处理状态异常");
+            // }
 
             JsonNode vsaintrsfrs = bizNode.get("VSAINTRSFRS");
             InnerTransferResult innerTransferResult = XML_MAPPER.readValue(XML_MAPPER.writeValueAsString(vsaintrsfrs), InnerTransferResult.class);
-            return innerTransferResult;
+
+            String serviceId = innerTransferResult.getServiceId();
+            TransferResult transferResult = new TransferResult();
+            transferResult.setTransId(serviceId);
+            transferResult.setSequence(caller.get());
+            transferResult.setStatus(transferProcessResult.getCode());
+            transferResult.setMessage(transferProcessResult.getMessage());
+            String code = transferProcessResult.getCode();
+            if (XferPrcEnum.valueOf(code).ordinal() == 0) {
+                // 中间状态
+                transferResult.setMidStatus(true);
+            } else {
+                transferResult.setMidStatus(false);
+            }
+
+            return transferResult;
         } catch (IOException e) {
             // e.printStackTrace();
             throw new CibException("解析异常", e);

@@ -3,6 +3,7 @@ package com.github.bluecatlee.cib.constant;
 /**
  * 交易指令处理状态
  */
+@Deprecated
 public class XferPrcConstants {
 
     /**

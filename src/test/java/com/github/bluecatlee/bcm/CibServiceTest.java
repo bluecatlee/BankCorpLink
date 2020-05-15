@@ -65,7 +65,7 @@ public class CibServiceTest {
     @Test
     public void testtransfer() {
         // cibService.innerTransfer("117010100100000177", "019000", "019001", new BigDecimal("0.01"), "支付服务费", "");
-        cibService.innerTransfer("117010100100050880", "961208", "010488", new BigDecimal("0.01"), "支付服务费", "");
+        cibService.innerTransfer("117010100100050880", "961208", "010488", new BigDecimal("0.01"), "支付服务费", "", null);
     }
 
     /**
