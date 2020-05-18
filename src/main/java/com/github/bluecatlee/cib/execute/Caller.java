@@ -18,13 +18,13 @@ import com.github.bluecatlee.cib.base.response.SecuritiesMsgResp;
 import com.github.bluecatlee.cib.constant.Constants;
 import com.github.bluecatlee.cib.constant.XferPrcConstants;
 import com.github.bluecatlee.cib.exception.CibException;
+import com.github.bluecatlee.cib.logger.CibLogger;
 import com.github.bluecatlee.cib.utils.OkHttpUtils;
 import com.github.bluecatlee.cib.utils.ReflectUtils;
 import com.github.bluecatlee.cib.valid.Validator;
 import com.github.bluecatlee.common.id.configuration.IdWorker;
 import com.github.bluecatlee.common.id.enumeration.Biz;
 import com.github.bluecatlee.common.id.enumeration.PayBizDetail;
-import com.github.bluecatlee.cib.logger.CibLogger;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,7 +184,8 @@ public class Caller {
         if (StringUtils.isBlank(requestSeqId)) {
             trnuid = String.valueOf(idWorker.generate(Biz.PAY, PayBizDetail.CIB));
         }
-        set(trnuid);
+        // 保存生成的sequence号 业务方需要进行保存 以便日志排查和重试
+        setSequence(trnuid);
         businessReq.setTrnuid(trnuid);
         businessReq.setReqParams(reqParams);
         securitiesMsgReq.setBusinessReq(businessReq);
@@ -288,6 +289,7 @@ public class Caller {
     protected void log(String type, String reqMsg, String respMsg, String trnuid, String code, String message, String xcode, String xmessage, String info) {
         if (cibLogger != null) {
             Map<String, String> params = new HashMap<>();
+            params.put("sequence", getSequence());
             params.put("type", type);
             params.put("reqMsg", reqMsg);
             params.put("respMsg", respMsg);
@@ -301,12 +303,16 @@ public class Caller {
         }
     }
 
-    protected void set(String val) {
+    protected void setSequence(String val) {
         threadLocal.set(val);
     }
 
-    public String get() {
+    public String getSequence() {
         return threadLocal.get();
+    }
+
+    public void removeSequence() {
+        threadLocal.remove();
     }
 
 }

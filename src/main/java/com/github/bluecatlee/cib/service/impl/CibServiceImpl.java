@@ -228,7 +228,7 @@ public class CibServiceImpl implements CibService {
             String serviceId = innerTransferResult.getServiceId();
             TransferResult transferResult = new TransferResult();
             transferResult.setTransId(serviceId);
-            transferResult.setSequence(caller.get());
+            transferResult.setSequence(caller.getSequence());
             transferResult.setStatus(transferProcessResult.getCode());
             transferResult.setMessage(transferProcessResult.getMessage());
             String code = transferProcessResult.getCode();
@@ -243,6 +243,8 @@ public class CibServiceImpl implements CibService {
         } catch (IOException e) {
             // e.printStackTrace();
             throw new CibException("解析异常", e);
+        } finally {
+            caller.removeSequence();
         }
 
 
