@@ -158,12 +158,11 @@ public class Caller {
     /**
      * 构建请求内容
      *      说明：必填字段必须要有对应的xml标签
-     *      使用了同步 如果有性能问题则需要单独构建请求内容
      * @param reqParams
      * @param requestSeqId
      * @return
      */
-    private synchronized String build(ReqParams reqParams, String requestSeqId) {
+    private String build(ReqParams reqParams, String requestSeqId) {
 
         // 参数校验
         Validator.validate(reqParams);
@@ -184,7 +183,6 @@ public class Caller {
         if (StringUtils.isBlank(requestSeqId)) {
             trnuid = String.valueOf(idWorker.generate(Biz.PAY, PayBizDetail.CIB));
         }
-        // 保存生成的sequence号 业务方需要进行保存 以便日志排查和重试
         setSequence(trnuid);
         businessReq.setTrnuid(trnuid);
         businessReq.setReqParams(reqParams);
@@ -194,16 +192,16 @@ public class Caller {
         String bizTag = reqParams.getBizTag();
         String paramsWrapperTag = reqParams.getParamsWrapperTag();
         String resultWrapperTag = reqParams.getResultWrapperTag();
-        boolean replaceFlag = false;
-        try {
-            // 动态设置注解属性值
-            ReflectUtils.modAnnotationVal(SecuritiesMsgReq.class, TAG_NAME, JacksonXmlProperty.class, PROP_NAME, bizTag);
-            ReflectUtils.modAnnotationVal(BusinessReq.class, ReqParams.class, JacksonXmlProperty.class, PROP_NAME, paramsWrapperTag);
-        } catch (Exception e) {
-            LOGGER.warn(LOG_PREFIX + "动态设置注解属性值异常: ", e);
-            // 异常 需要进行文本替换
-            replaceFlag = true;
-        }
+        // boolean replaceFlag = false;
+        // try {
+        //     // 动态设置注解属性值
+        //     ReflectUtils.modAnnotationVal(SecuritiesMsgReq.class, TAG_NAME, JacksonXmlProperty.class, PROP_NAME, bizTag);
+        //     ReflectUtils.modAnnotationVal(BusinessReq.class, ReqParams.class, JacksonXmlProperty.class, PROP_NAME, paramsWrapperTag);
+        // } catch (Exception e) {
+        //     LOGGER.warn(LOG_PREFIX + "动态设置注解属性值异常: ", e);
+        //     // 异常 需要进行文本替换
+        //     replaceFlag = true;
+        // }
 
         String xmlStr = null;
         try {
@@ -212,9 +210,15 @@ public class Caller {
             e.printStackTrace();
         }
 
-        if (replaceFlag) {
-            xmlStr = xmlStr.replace("<" + TAG_NAME + ">", "<" + bizTag + ">")
-                    .replace("</" + TAG_NAME + ">", "</" + bizTag + ">");
+        // if (replaceFlag) {
+        //     xmlStr = xmlStr.replace("<" + TAG_NAME + ">", "<" + bizTag + ">")
+        //             .replace("</" + TAG_NAME + ">", "</" + bizTag + ">");
+        // }
+
+        // 替换方案
+        xmlStr = xmlStr.replace(TAG_NAME, bizTag);
+        if (!"RQBODY".equals(paramsWrapperTag)) {
+            xmlStr = xmlStr.replace("RQBODY", paramsWrapperTag);
         }
 
         return XML_HEADER + xmlStr;
