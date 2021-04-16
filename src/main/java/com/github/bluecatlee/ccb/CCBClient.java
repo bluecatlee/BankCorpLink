@@ -1,27 +1,33 @@
 package com.github.bluecatlee.ccb;
 
 import CCBSign.RSASig;
-import cn.greensuper.payment.apiclient.ccb.annotation.CCBPayField;
-import cn.greensuper.payment.apiclient.ccb.api.CCBApi;
-import cn.greensuper.payment.apiclient.ccb.vo.*;
-import cn.greensuper.payment.apiclient.ccb.vo.request.ConnectRequest;
-import cn.greensuper.payment.apiclient.ccb.vo.request.PayRequest;
-import cn.greensuper.payment.apiclient.ccb.vo.response.ConnectResponse;
-import cn.greensuper.payment.utils.MD5Utils;
-import cn.greensuper.payment.utils.SeqUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.gb.soa.omp.ccommon.util.StringUtil;
+import com.github.bluecatlee.ccb.annotation.CCBPayField;
+import com.github.bluecatlee.ccb.api.CCBApi;
+import com.github.bluecatlee.ccb.utils.Escape;
+import com.github.bluecatlee.ccb.utils.MCipherDecode;
+import com.github.bluecatlee.ccb.utils.MD5Utils;
+import com.github.bluecatlee.ccb.utils.StringUtil;
+import com.github.bluecatlee.ccb.bean.*;
+import com.github.bluecatlee.ccb.bean.request.ConnectRequest;
+import com.github.bluecatlee.ccb.bean.request.PayRequest;
+import com.github.bluecatlee.ccb.bean.response.ConnectResponse;
+import com.github.bluecatlee.ccb.redundance.MessagePack;
+import com.github.bluecatlee.common.id.configuration.IdWorker;
+import com.github.bluecatlee.common.id.enumeration.Biz;
+import com.github.bluecatlee.common.id.enumeration.PayBizDetail;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import retrofit2.Call;
@@ -38,6 +44,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+//import com.github.bluecatlee.ccb.utils.SeqUtil;
 
 /**
  * 建行外联平台客户端调用器
@@ -84,6 +92,8 @@ public class CCBClient implements InitializingBean {
     @Value("${ccb.publicKey}")
     private String publicKey;   // 商户公钥
 
+    @Autowired
+    private IdWorker idWorker;
 
     @PostConstruct
     public void generateApi() {
@@ -240,7 +250,7 @@ public class CCBClient implements InitializingBean {
         String requestBody = this.buildXml(body);
         log.info(TAG + "xml参数：{}", requestBody);
 
-        // 先执行连接请求
+        // 先执行连接请求 todo 我也不知道为什么每次请求外联平台客户端前都要连接一次
         if (connect) {
             this.connect();
         }
@@ -302,7 +312,8 @@ public class CCBClient implements InitializingBean {
     private String buildXml(CCBRequestBody body) {
         // 封装基础参数
         CCBBaseRequest ccbBaseRequest = new CCBBaseRequest();
-        Long requestNo = SeqUtil.getNoSubSequence("cbaseinfo", "ccbpay_request_no");
+//        Long requestNo = SeqUtil.getNoSubSequence("cbaseinfo", "ccbpay_request_no");
+        Long requestNo = idWorker.generate(Biz.UNUSED, PayBizDetail.CCB);
         ccbBaseRequest.setRequestSn(String.valueOf(requestNo));
         ccbBaseRequest.setCustId(custId);
         ccbBaseRequest.setTxCode(body.getTxCode());

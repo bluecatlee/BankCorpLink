@@ -16,7 +16,9 @@ import java.util.concurrent.*;
 
 /**
  * 基于SnowFlake算法生成分布式id
+ * @see <a href="https://github.com/bluecatlee/algorithm/tree/master/snowflake/improvement">左移位数过大的bug</a>
  */
+@Deprecated // 这个实现有bug 懒得改了
 public class IdWorker {
 
     // SnowFlake算法生成id的结果是一个64bit大小的整数

@@ -12,7 +12,9 @@ public enum PayBizDetail implements BizDetailEnum{
 	 */
 	BCM(0),
 
-	CIB(1);
+	CIB(1),
+
+	CCB(2);
 
 	private int value;
 

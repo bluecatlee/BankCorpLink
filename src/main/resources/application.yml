@@ -34,4 +34,14 @@ cib:
     port: 8007
 
 
+#建行支付 建行无测试环境
+ccb:
+  #外联平台客户端配置
+  url: http://172.17.128.54:9996
+  custId:
+  posId:
+  branchId:
+  userId:
+  password:
+  publicKey:
 
