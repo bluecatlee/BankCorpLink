@@ -93,17 +93,15 @@
             <version>1.60</version>
         </dependency>
 
+        <!-- 该包由建行提供 是个加密工具 理论上可以自行实现-->
+        <!-- 也可以上传至个人私服 使用下面的profile方式指定特定仓库来访问 -->
         <dependency>
             <groupId>netpay.merchant</groupId>
             <artifactId>crypto</artifactId>
             <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/WEB-INF/lib/crypto-1.0.jar</systemPath>
         </dependency>
-
-        <!--<dependency>-->
-            <!--<artifactId>hibernate-validator</artifactId>-->
-            <!--<groupId>org.hibernate</groupId>-->
-            <!--<version>5.2.4.Final</version>-->
-        <!--</dependency>-->
 
         <dependency>
             <groupId>tk.mybatis</groupId>
@@ -137,7 +135,39 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-compiler-plugin</artifactId>-->
+                <!--<configuration>-->
+                    <!--<source>1.8</source>-->
+                    <!--<target>1.8</target>-->
+                    <!--<encoding>UTF-8</encoding>-->
+                    <!--<compilerArguments>-->
+                        <!--<extdirs>${project.basedir}/src/main/resources/WEB-INF/lib</extdirs>-->
+                    <!--</compilerArguments>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
         </plugins>
     </build>
+
+    <!--<profiles>-->
+        <!--<profile>-->
+            <!--<id>github</id>-->
+            <!--<repositories>-->
+                <!--<repository>-->
+                    <!--<id>central</id>-->
+                    <!--<url>https://repo1.maven.org/maven2</url>-->
+                <!--</repository>-->
+                <!--<repository>-->
+                    <!--<id>github</id>-->
+                    <!--<url>https://maven.pkg.github.com/bluecatlee/*</url>-->
+                    <!--<snapshots>-->
+                        <!--<enabled>true</enabled>-->
+                    <!--</snapshots>-->
+                <!--</repository>-->
+            <!--</repositories>-->
+        <!--</profile>-->
+    <!--</profiles>-->
+
 
 </project>
