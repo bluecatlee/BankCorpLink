@@ -24,7 +24,7 @@ import javax.annotation.Resource;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = AppApplication.class)
-@ActiveProfiles("test")
+//@ActiveProfiles("test")
 public class CCBTest {
 
     private static final XmlMapper XML_MAPPER = new XmlMapper();
@@ -177,7 +177,8 @@ public class CCBTest {
         CCBPayRequest request = new CCBPayRequest();
         CCBPayResponse response = new CCBPayResponse();
 
-        request.setSrcOutTradeNo("902341054720859121_1");
+        request.setSrcOutTradeNo("902011004620479028_1");
+        request.setOutTradeNo("REFUND902771064821501028_1");
 
         try {
             BaseResponse result = paymentService.queryRefundResult(request, response);

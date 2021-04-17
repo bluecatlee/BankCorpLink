@@ -1,8 +1,11 @@
 package com.github.bluecatlee.ccb.bean.response;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.github.bluecatlee.ccb.bean.CCBResponseBody;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * 退款查询响应
@@ -21,8 +24,8 @@ public class RefundQueryResponse extends CCBResponseBody {
     /**
      * 总页次
      */
-    @JacksonXmlProperty(localName = "PAGE_COUNT")
-    private String pageCount;
+    @JacksonXmlProperty(localName = "TPAGE")
+    private String tPage;
 
     /**
      * 提示
@@ -33,8 +36,10 @@ public class RefundQueryResponse extends CCBResponseBody {
     /**
      * 明细
      */
-//    private List<RefundDetails> details;
     @JacksonXmlProperty(localName = "LIST")
-    private RefundDetails details;
+    @JacksonXmlElementWrapper(useWrapping = false)
+    private List<RefundDetails> details;
+//    @JacksonXmlProperty(localName = "LIST")
+//    private RefundDetails details;
 
 }

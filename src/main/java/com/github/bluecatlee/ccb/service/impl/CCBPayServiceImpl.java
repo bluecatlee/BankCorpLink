@@ -31,13 +31,16 @@ import org.springframework.stereotype.Service;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
+import javax.validation.constraints.NotBlank;
 import javax.validation.groups.Default;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 建行支付实现
@@ -221,24 +224,25 @@ public class CCBPayServiceImpl implements PaymentService<CCBPayRequest, CCBPayRe
         }
 
         PayQueryResponse payQueryResponse = baseResponse.getCcbResponseBody();
-        PayDetails details = payQueryResponse.getDetails();
-        String orderStatus = details.getOrderStatus();
+        List<PayDetails> details = payQueryResponse.getDetails();
+        PayDetails detail = details.get(0);             //
+        String orderStatus = detail.getOrderStatus();
         if (CCBOrderStatusEnum.SUCCESS.getStatus().equals(orderStatus) ||
                 CCBOrderStatusEnum.REBATE.getStatus().equals(orderStatus) || CCBOrderStatusEnum.FULL_REDUND.getStatus().equals(orderStatus)) {
             // 支付成功 理论上如果返回部分退款和全部退款也算是支付成功 因为支付成功才能退款
-            res.setTransactionId(details.getOriOvrlsttnEVTrckNo());
-            res.setTotalFee(new BigDecimal(details.getOrigAmt()).doubleValue());
-//            res.setTotalFee(new BigDecimal(details.getTxnAmt()).doubleValue());     // todo 真实扣卡金额TxnAmtv不是必返的
-//            if (StringUtils.isNotBlank(details.getDiscountAmt())) {
-//                res.setExt1(details.getDiscountAmt());        // todo 存在查询出支付成功并且需要补支付完成的业务的逻辑 理论上需要返回优惠金额
+            res.setTransactionId(detail.getOriOvrlsttnEVTrckNo());
+            res.setTotalFee(new BigDecimal(detail.getOrigAmt()).doubleValue());
+//            res.setTotalFee(new BigDecimal(detail.getTxnAmt()).doubleValue());     // todo 真实扣卡金额TxnAmtv不是必返的
+//            if (StringUtils.isNotBlank(detail.getDiscountAmt())) {
+//                res.setExt1(detail.getDiscountAmt());        // todo 存在查询出支付成功并且需要补支付完成的业务的逻辑 理论上需要返回优惠金额
 //            }
             res.setTradeStatus(TradeStatusEnum.SUCCESS.getStatus());
             res.setTradeStatusRes(JSON.toJSONString(baseResponse));
             res.setCode(RespEnum.SUCCESS.getStatus());
         } else if (CCBOrderStatusEnum.TBC.getStatus().equals(orderStatus) || CCBOrderStatusEnum.TBC2.getStatus().equals(orderStatus)) {
             // 待银行确认
-//            res.setTransactionId(details.getOriOvrlsttnEVTrckNo());
-//            res.setTotalFee(new BigDecimal(details.getOrigAmt()).doubleValue());
+//            res.setTransactionId(detail.getOriOvrlsttnEVTrckNo());
+//            res.setTotalFee(new BigDecimal(detail.getOrigAmt()).doubleValue());
             res.setTradeStatus(TradeStatusEnum.PROCESSING.getStatus());
             res.setTradeStatusRes(JSON.toJSONString(baseResponse));
             res.setCode(RespEnum.SUCCESS.getStatus());
@@ -264,6 +268,15 @@ public class CCBPayServiceImpl implements PaymentService<CCBPayRequest, CCBPayRe
         refundQueryRequest.setPage("1");
         refundQueryRequest.setStatus(CCBBillStatusEnum.ALL.getStatus());
 
+        String outTradeNo = req.getOutTradeNo();    // 原退款流水号
+        if (StringUtils.isBlank(outTradeNo)) {
+            res.setCode(RespEnum.ERROR_MINUS_100.getStatus());
+            res.setTradeStatus(TradeStatusEnum.ERROR.getStatus());
+            res.setTradeStatusRes("建行退款查询失败: 建行退款查询必须传退款流水号outTradeNo!");
+            log.info("CCBPayServiceImpl queryRefundResult response: {}", OBJECT_MAPPER.writeValueAsString(res));
+            return res;
+        }
+
         CCBBaseResponse<RefundQueryResponse> baseResponse = ccbClient.executeRequestNew(refundQueryRequest, new TypeReference<CCBBaseResponse<RefundQueryResponse>>() {
         });
 
@@ -277,20 +290,40 @@ public class CCBPayServiceImpl implements PaymentService<CCBPayRequest, CCBPayRe
         }
 
         RefundQueryResponse refundQueryResponse = baseResponse.getCcbResponseBody();
-        RefundDetails details = refundQueryResponse.getDetails();
-        String status = details.getStatus();
+        List<RefundDetails> details = refundQueryResponse.getDetails();
+        if (CollectionUtils.isNotEmpty(details)) {
+            details = details.stream().filter(d -> StringUtils.equals(d.getRefundCode(), outTradeNo)).collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(details)) {
+            res.setTradeStatus(TradeStatusEnum.ERROR.getStatus());
+            res.setTradeStatusRes(JSON.toJSONString(baseResponse));
+            res.setCode(RespEnum.ERROR_MINUS_100.getStatus());
+            res.setMessage(String.format("建行退款查询失败: 未查询到退款流水! 原单号：%s，退款流水号：%s", req.getSrcOutTradeNo(), outTradeNo));
+            log.info("CCBPayServiceImpl queryRefundResult response: {}", OBJECT_MAPPER.writeValueAsString(res));
+            return res;
+        } else if (details.size() > 1) {
+            res.setTradeStatus(TradeStatusEnum.ERROR.getStatus());
+            res.setTradeStatusRes(JSON.toJSONString(baseResponse));
+            res.setCode(RespEnum.ERROR_MINUS_100.getStatus());
+            res.setMessage(String.format("建行退款查询异常: 同一个退款流水号查询到多条退款记录！ 原单号：%s，退款流水号：%s", req.getSrcOutTradeNo(), outTradeNo));
+            log.info("CCBPayServiceImpl queryRefundResult response: {}", OBJECT_MAPPER.writeValueAsString(res));
+            return res;
+        }
+
+        RefundDetails detail = details.get(0);
+        String status = detail.getStatus();
         if (CCBOrderStatusEnum.SUCCESS.getStatus().equals(status)) {
             // 退款成功
-            res.setTransactionId(details.getOriOvrlsttnEVTrckNo());
-            res.setTotalFee(new BigDecimal(details.getOrigAmt()).doubleValue());
-//            res.setTotalFee(new BigDecimal(details.getTxnAmt()).doubleValue());
+            res.setTransactionId(detail.getOriOvrlsttnEVTrckNo());
+            res.setTotalFee(new BigDecimal(detail.getOrigAmt()).doubleValue());
+//            res.setTotalFee(new BigDecimal(detail.getTxnAmt()).doubleValue());
             res.setTradeStatus(TradeStatusEnum.SUCCESS.getStatus());
             res.setTradeStatusRes(JSON.toJSONString(baseResponse));
             res.setCode(RespEnum.SUCCESS.getStatus());
         } else if (CCBOrderStatusEnum.TBC.getStatus().equals(status) || CCBOrderStatusEnum.TBC2.getStatus().equals(status)) {
             // 待银行确认
-//            res.setTransactionId(details.getOriOvrlsttnEVTrckNo());
-//            res.setTotalFee(new BigDecimal(details.getOrigAmt()).doubleValue());
+//            res.setTransactionId(detail.getOriOvrlsttnEVTrckNo());
+//            res.setTotalFee(new BigDecimal(detail.getOrigAmt()).doubleValue());
             res.setTradeStatus(TradeStatusEnum.PROCESSING.getStatus());
             res.setTradeStatusRes(JSON.toJSONString(baseResponse));
             res.setCode(RespEnum.SUCCESS.getStatus());
