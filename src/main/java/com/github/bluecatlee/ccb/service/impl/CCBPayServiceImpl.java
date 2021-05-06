@@ -1,7 +1,6 @@
 package com.github.bluecatlee.ccb.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -9,7 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.bluecatlee.ccb.CCBClient;
 import com.github.bluecatlee.ccb.bean.CCBBaseResponse;
 import com.github.bluecatlee.ccb.bean.NotifyParams;
-import com.github.bluecatlee.ccb.bean.base.*;
+import com.github.bluecatlee.ccb.bean.base.CCBPayRequest;
+import com.github.bluecatlee.ccb.bean.base.CCBPayResponse;
 import com.github.bluecatlee.ccb.bean.request.PayQueryRequest;
 import com.github.bluecatlee.ccb.bean.request.PayRequest;
 import com.github.bluecatlee.ccb.bean.request.RefundQueryRequest;
@@ -20,9 +20,7 @@ import com.github.bluecatlee.ccb.constant.CCBOrderStatusEnum;
 import com.github.bluecatlee.ccb.constant.CCBSuccessFlagEnum;
 import com.github.bluecatlee.ccb.constant.Constants;
 import com.github.bluecatlee.ccb.redundance.*;
-import com.github.bluecatlee.ccb.redundance.PaymentService;
 import com.github.bluecatlee.ccb.utils.MathUtil;
-import com.github.bluecatlee.ccb.redundance.MessagePack;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,9 +29,9 @@ import org.springframework.stereotype.Service;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
-import javax.validation.constraints.NotBlank;
 import javax.validation.groups.Default;
 import java.math.BigDecimal;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -341,50 +339,24 @@ public class CCBPayServiceImpl implements PaymentService<CCBPayRequest, CCBPayRe
     public BaseResponse callbackNotify(BaseRequest request, BaseResponse response) throws Exception {
         log.info("CCBPayServiceImpl callbackNotify request: {}", OBJECT_MAPPER.writeValueAsString(request));
 
-        // 解析参数 不确定建行传参的方式 先尝试解析请求体中的键值对
         Map<String, String> flatParams = new HashMap<>();
         String body = request.getBody();
-//        body = URLDecoder.decode(body, CCBClient.CHARSET_ISO_8859_1);   // url解码 这里先不解码 todo 验签的时候是按照什么编码的？
+//        body = URLDecoder.decode(body, CCBClient.CHARSET_ISO_8859_1);   // url解码     建行签名的时候是按照iso-8859-1编码的，签名之后再进行url转义
         if (StringUtils.isNotBlank(body)) {
             String[] kvArr = body.split("&");
             if (kvArr != null && kvArr.length > 0) {
                 for (int i = 0; i < kvArr.length; i++) {
                     String kvPair = kvArr[i];
                     if (StringUtils.isNotBlank(kvPair)) {
-                        String[] split = kvPair.split("=", -1);
+                        String[] split = kvPair.split("=", -1);     // 参数值中可能存在=  因此应该单独对参数值进行解码 不能直接对body体解码
                         if (split != null && split.length == 2) {
                             String key = split[0];
                             String value = split[1];
                             // 编码处理
-//                            byte[] tempByte = value.getBytes(CCBClient.CHARSET_ISO_8859_1);
-//                            String a = new String(tempByte, CCBClient.CHARSET_UTF_8);
-                            flatParams.put(key, value);
+                            flatParams.put(key, URLDecoder.decode(value, CCBClient.CHARSET_ISO_8859_1));
                         }
                     }
                 }
-            }
-        }
-        if (flatParams.size() == 0) { // 如果从body中未解析到 再尝试从request.getParameterMap()中获取参数
-            Map<String, Object> params = request.getRequestParam();
-            for (Map.Entry<String, Object> entry : params.entrySet()) {
-                String key = entry.getKey();
-                Object value = entry.getValue();
-                String[] arr = null;
-                if (value instanceof JSONArray) {           // Map<String, String[]>在前面步骤中转成jsonStr再反序列化回来后变成了 Map<String, JSONArray>
-                    JSONArray jsonArray = (JSONArray)entry.getValue();
-                    arr = jsonArray.toArray(new String[]{});
-                } else if (value instanceof String[]) {
-                    arr = (String[])entry.getValue();
-                }
-                if (arr == null) {
-                    throw new Exception("建行异步回调失败：参数解析失败! ");
-                }
-//            String valueStr = StringUtils.join(arr, ",");
-                String valueStr = arr[0];
-                // 编码处理
-//                byte[] tempByte = valueStr.getBytes(CCBClient.CHARSET_ISO_8859_1);
-//                String a = new String(tempByte, CCBClient.CHARSET_UTF_8);
-                flatParams.put(key, valueStr);
             }
         }
 
@@ -426,8 +398,6 @@ public class CCBPayServiceImpl implements PaymentService<CCBPayRequest, CCBPayRe
         } catch (Exception e) {
             log.info("建行异步回调：USRMSG解密失败", e);
         }
-
-        // todo 从usrmsg的解密逻辑来看 解密的时候才开始解码的  因此是否是验证签名之后再解码？ 如果是这样 解码应该在这里才开始
 
         paramsStr = OBJECT_MAPPER.writeValueAsString(notifyParams);
 
