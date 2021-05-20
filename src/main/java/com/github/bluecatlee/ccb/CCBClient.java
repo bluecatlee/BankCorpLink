@@ -422,7 +422,7 @@ public class CCBClient implements InitializingBean {
             String decodedString = mcd.getDecodeString(usrMsg);
             // 进行字符转码
             byte[] tempByte = decodedString.getBytes(CHARSET_ISO_8859_1);
-            String a = new String(tempByte, CHARSET_UTF_8);
+            String a = new String(tempByte, CHARSET_GBK);
             return a;
         } catch (Exception e) {
             throw new RuntimeException("支付账户信息USRMSG解密失败!", e);

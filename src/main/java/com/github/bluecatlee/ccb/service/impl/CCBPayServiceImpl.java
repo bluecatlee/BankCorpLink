@@ -353,7 +353,15 @@ public class CCBPayServiceImpl implements PaymentService<CCBPayRequest, CCBPayRe
                             String key = split[0];
                             String value = split[1];
                             // 编码处理
-                            flatParams.put(key, URLDecoder.decode(value, CCBClient.CHARSET_ISO_8859_1));
+                            if (key.equals("USRMSG")) {
+                                // USRMSG字段不需要解码 而REFERER字段需要解码之后参与验签 ...
+                                // USRMSG字段未配置返回
+                                // todo USRINFO、PAYMENT_DETAILS等字段没有配置返回  不确定验签前是否需要解码
+                                flatParams.put(key, value);
+                            } else {
+                                flatParams.put(key, URLDecoder.decode(value, CCBClient.CHARSET_ISO_8859_1));
+
+                            }
                         }
                     }
                 }
@@ -389,7 +397,7 @@ public class CCBPayServiceImpl implements PaymentService<CCBPayRequest, CCBPayRe
             throw new Exception("建行异步回调失败：验签失败");
         }
 
-        // 用户信息解密 字段二次解析  todo 说明：USRMSG、USRINFO、PAYMENT_DETAILS等字段没有配置返回 如果配置了返回 由于编码等问题 这里的验签可能有问题(没试过)
+        // 用户信息解密 字段二次解析  注意： USRMSG解密的时候不需要编码成ISO_8859_1， 因为编码工具类中已经有处理了
         try {
             if (StringUtils.isNotBlank(notifyParams.getUsrMsg())) {
                 String decodedUsrMsg = ccbClient.decodeUsrMsg(notifyParams.getUsrMsg());
@@ -464,7 +472,15 @@ public class CCBPayServiceImpl implements PaymentService<CCBPayRequest, CCBPayRe
         response.setTradeStatus(TradeStatusEnum.SUCCESS.getStatus());
         response.setTradeStatusRes(paramsStr);
         response.setTotalFee(new BigDecimal(payment).doubleValue());
-//        response.setExt1();               // todo 优惠金额的处理
+
+        String discount = notifyParams.getDiscount();  // 实付金额
+        if (StringUtils.isNotBlank(discount)) {
+            if (new BigDecimal(payment).compareTo(new BigDecimal(discount)) > 0) {
+                // 计算优惠金额
+                BigDecimal ext1 = new BigDecimal(payment).subtract(new BigDecimal(discount)).setScale(2, BigDecimal.ROUND_HALF_UP);
+                response.setExt1(ext1.toString());
+            }
+        }
 
         log.info("CCBPayServiceImpl callbackNotify 建行异步回调成功");
         log.info("CCBPayServiceImpl callbackNotify response: {}", OBJECT_MAPPER.writeValueAsString(response));
